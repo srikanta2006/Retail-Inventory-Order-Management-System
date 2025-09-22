@@ -1,48 +1,77 @@
 # src/cli/main.py
 import argparse
 import json
+from src.services import product_service, order_service, customer_service, report_service
 
-from src.services.product_service import ProductService
-# from src.services.customer_service import CustomerService
-# from src.services.order_service import OrderService
-
+ProductService = product_service.ProductService
+CustomerService = customer_service.CustomerService
+OrderService = order_service.OrderService
+ReportService = report_service.ReportService
 
 class RetailCLI:
     def __init__(self):
-        # Initialize service objects
-        self.product_service = ProductService()
-        # self.customer_service = CustomerService()
-        # self.order_service = OrderService()
+        self.prod_service = ProductService()
+        self.cust_service = CustomerService()
+        self.order_service = OrderService()
+        self.report_service = ReportService()
 
     # ---------------------- Product Commands ---------------------- #
     def cmd_product_add(self, args):
         try:
-            p = self.product_service.add_product(
-                args.name, args.sku, args.price, args.stock, args.category
-            )
-            print("✅ Created product:")
+            p = self.prod_service.add_product(args.name, args.sku, args.price, args.stock, args.category)
+            print("✅ Product added:")
             print(json.dumps(p, indent=2, default=str))
         except Exception as e:
             print("❌ Error:", e)
 
     def cmd_product_list(self, args):
-        ps = self.product_service.list_products(limit=100)
-        print(json.dumps(ps, indent=2, default=str))
+        try:
+            ps = self.prod_service.list_products(category=args.category)
+            print(json.dumps(ps, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
 
     # ---------------------- Customer Commands ---------------------- #
     def cmd_customer_add(self, args):
-        # Placeholder – hook CustomerService here
         try:
-            print("⚠ Customer service not implemented yet.")
-            # c = self.customer_service.create_customer(args.name, args.email, args.phone, args.city)
-            # print("✅ Created customer:")
-            # print(json.dumps(c, indent=2, default=str))
+            c = self.cust_service.create_customer(args.name, args.email, args.phone, args.city)
+            print("✅ Customer added:")
+            print(json.dumps(c, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_customer_update(self, args):
+        try:
+            c = self.cust_service.update_customer(args.customer, args.phone, args.city)
+            print("✅ Customer updated:")
+            print(json.dumps(c, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_customer_delete(self, args):
+        try:
+            c = self.cust_service.delete_customer(args.customer)
+            print("✅ Customer deleted:")
+            print(json.dumps(c, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_customer_list(self, args):
+        try:
+            customers = self.cust_service.list_customers()
+            print(json.dumps(customers, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_customer_search(self, args):
+        try:
+            res = self.cust_service.search_customers(args.email, args.city)
+            print(json.dumps(res, indent=2, default=str))
         except Exception as e:
             print("❌ Error:", e)
 
     # ---------------------- Order Commands ---------------------- #
     def cmd_order_create(self, args):
-        # items provided as prod_id:qty strings
         items = []
         for item in args.item:
             try:
@@ -52,81 +81,157 @@ class RetailCLI:
                 print("❌ Invalid item format:", item)
                 return
         try:
-            print("⚠ Order service not implemented yet.")
-            # ord = self.order_service.create_order(args.customer, items)
-            # print("✅ Order created:")
-            # print(json.dumps(ord, indent=2, default=str))
+            order = self.order_service.create_order(args.customer, items)
+            print("✅ Order created:")
+            print(json.dumps(order, indent=2, default=str))
         except Exception as e:
             print("❌ Error:", e)
 
     def cmd_order_show(self, args):
         try:
-            print("⚠ Order service not implemented yet.")
-            # o = self.order_service.get_order_details(args.order)
-            # print(json.dumps(o, indent=2, default=str))
+            o = self.order_service.get_order_details(args.order)
+            print(json.dumps(o, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_order_list(self, args):
+        try:
+            orders = self.order_service.list_orders_by_customer(args.customer)
+            print(json.dumps(orders, indent=2, default=str))
         except Exception as e:
             print("❌ Error:", e)
 
     def cmd_order_cancel(self, args):
         try:
-            print("⚠ Order service not implemented yet.")
-            # o = self.order_service.cancel_order(args.order)
-            # print("✅ Order cancelled (updated):")
-            # print(json.dumps(o, indent=2, default=str))
+            o = self.order_service.cancel_order(args.order)
+            print("✅ Order cancelled:")
+            print(json.dumps(o, indent=2, default=str))
         except Exception as e:
             print("❌ Error:", e)
 
-    # ---------------------- Parser Builder ---------------------- #
+    def cmd_order_complete(self, args):
+        try:
+            o = self.order_service.complete_order(args.order)
+            print("✅ Order completed:")
+            print(json.dumps(o, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    # ---------------------- Reporting Commands ---------------------- #
+    def cmd_report_top_products(self, args):
+        try:
+            res = self.report_service.top_selling_products()
+            print(json.dumps(res, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_report_total_revenue(self, args):
+        try:
+            rev = self.report_service.total_revenue_last_month()
+            print(f"💰 Total revenue last month: {rev}")
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_report_orders_per_customer(self, args):
+        try:
+            data = self.report_service.total_orders_per_customer()
+            print(json.dumps(data, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    def cmd_report_frequent_customers(self, args):
+        try:
+            data = self.report_service.frequent_customers()
+            print(json.dumps(data, indent=2, default=str))
+        except Exception as e:
+            print("❌ Error:", e)
+
+    # ---------------------- CLI Parser ---------------------- #
     def build_parser(self):
         parser = argparse.ArgumentParser(prog="retail-cli")
         sub = parser.add_subparsers(dest="cmd")
 
-        # product add/list
-        p_prod = sub.add_parser("product", help="product commands")
+        # Product
+        p_prod = sub.add_parser("product", help="Product commands")
         pprod_sub = p_prod.add_subparsers(dest="action")
-
         addp = pprod_sub.add_parser("add")
         addp.add_argument("--name", required=True)
         addp.add_argument("--sku", required=True)
         addp.add_argument("--price", type=float, required=True)
         addp.add_argument("--stock", type=int, default=0)
-        addp.add_argument("--category", default=None)
+        addp.add_argument("--category")
         addp.set_defaults(func=self.cmd_product_add)
 
         listp = pprod_sub.add_parser("list")
+        listp.add_argument("--category")
         listp.set_defaults(func=self.cmd_product_list)
 
-        # customer add
-        pcust = sub.add_parser("customer", help="customer commands")
+        # Customer
+        pcust = sub.add_parser("customer", help="Customer commands")
         pcust_sub = pcust.add_subparsers(dest="action")
-
         addc = pcust_sub.add_parser("add")
         addc.add_argument("--name", required=True)
         addc.add_argument("--email", required=True)
         addc.add_argument("--phone", required=True)
-        addc.add_argument("--city", default=None)
+        addc.add_argument("--city")
         addc.set_defaults(func=self.cmd_customer_add)
 
-        # order create/show/cancel
-        porder = sub.add_parser("order", help="order commands")
-        porder_sub = porder.add_subparsers(dest="action")
+        updatec = pcust_sub.add_parser("update")
+        updatec.add_argument("--customer", type=int, required=True)
+        updatec.add_argument("--phone")
+        updatec.add_argument("--city")
+        updatec.set_defaults(func=self.cmd_customer_update)
 
+        deletec = pcust_sub.add_parser("delete")
+        deletec.add_argument("--customer", type=int, required=True)
+        deletec.set_defaults(func=self.cmd_customer_delete)
+
+        listc = pcust_sub.add_parser("list")
+        listc.set_defaults(func=self.cmd_customer_list)
+
+        searchc = pcust_sub.add_parser("search")
+        searchc.add_argument("--email")
+        searchc.add_argument("--city")
+        searchc.set_defaults(func=self.cmd_customer_search)
+
+        # Order
+        porder = sub.add_parser("order", help="Order commands")
+        porder_sub = porder.add_subparsers(dest="action")
         createo = porder_sub.add_parser("create")
         createo.add_argument("--customer", type=int, required=True)
-        createo.add_argument("--item", required=True, nargs="+", help="prod_id:qty (repeatable)")
+        createo.add_argument("--item", required=True, nargs="+", help="prod_id:qty")
         createo.set_defaults(func=self.cmd_order_create)
 
         showo = porder_sub.add_parser("show")
         showo.add_argument("--order", type=int, required=True)
         showo.set_defaults(func=self.cmd_order_show)
 
-        cano = porder_sub.add_parser("cancel")
-        cano.add_argument("--order", type=int, required=True)
-        cano.set_defaults(func=self.cmd_order_cancel)
+        listo = porder_sub.add_parser("list")
+        listo.add_argument("--customer", type=int, required=True)
+        listo.set_defaults(func=self.cmd_order_list)
+
+        canco = porder_sub.add_parser("cancel")
+        canco.add_argument("--order", type=int, required=True)
+        canco.set_defaults(func=self.cmd_order_cancel)
+
+        compo = porder_sub.add_parser("complete")
+        compo.add_argument("--order", type=int, required=True)
+        compo.set_defaults(func=self.cmd_order_complete)
+
+        # Report
+        prep = sub.add_parser("report", help="Reports")
+        prep_sub = prep.add_subparsers(dest="action")
+        top_prod = prep_sub.add_parser("top_products")
+        top_prod.set_defaults(func=self.cmd_report_top_products)
+        rev = prep_sub.add_parser("total_revenue")
+        rev.set_defaults(func=self.cmd_report_total_revenue)
+        orders_pc = prep_sub.add_parser("orders_per_customer")
+        orders_pc.set_defaults(func=self.cmd_report_orders_per_customer)
+        freq_cust = prep_sub.add_parser("frequent_customers")
+        freq_cust.set_defaults(func=self.cmd_report_frequent_customers)
 
         return parser
 
-    # ---------------------- Main Entrypoint ---------------------- #
     def run(self):
         parser = self.build_parser()
         args = parser.parse_args()
